@@ -10,12 +10,16 @@ from utils.rag_pipeline import get_llm
 # Load environment variables
 load_dotenv()
 
-# Page configuration
+# Page Configuration
 st.set_page_config(
     page_title="AI Research Paper Assistant",
     page_icon="📚",
     layout="wide"
 )
+
+# Session State for Chat History
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
 # Title
 st.title("📚 AI Research Paper Assistant")
@@ -39,7 +43,7 @@ if pdf:
         # Create embeddings
         embeddings = get_embeddings()
 
-        # Create FAISS vector database
+        # Create Vector Store
         vector_db = create_vector_store(
             chunks,
             embeddings
@@ -48,26 +52,66 @@ if pdf:
         # Load Gemini
         llm = get_llm()
 
+    # Sidebar
+    with st.sidebar:
+
+        st.header("📄 Paper Statistics")
+
+        st.metric(
+            "Chunks",
+            len(chunks)
+        )
+
+        st.metric(
+            "Characters",
+            len(text)
+        )
+
+        st.success("Paper Loaded")
+
+        if st.button("🗑 Clear Chat"):
+
+            st.session_state.messages = []
+
+            st.rerun()
+
     st.success("✅ PDF Processed Successfully")
 
-    st.info(f"Total Chunks Created: {len(chunks)}")
+    # Display Chat History
+    for message in st.session_state.messages:
 
-    # Question Input
-    question = st.text_input(
+        with st.chat_message(message["role"]):
+
+            st.markdown(message["content"])
+
+    # Chat Input
+    question = st.chat_input(
         "Ask a question about the paper"
     )
 
     if question:
 
+        # Store User Message
+        st.session_state.messages.append(
+            {
+                "role": "user",
+                "content": question
+            }
+        )
+
+        with st.chat_message("user"):
+
+            st.markdown(question)
+
         with st.spinner("Generating Answer..."):
 
-            # Retrieve relevant chunks
+            # Retrieve Relevant Chunks
             docs = vector_db.similarity_search(
                 question,
                 k=4
             )
 
-            # Build context
+            # Build Context
             context = "\n\n".join(
                 [doc.page_content for doc in docs]
             )
@@ -89,13 +133,25 @@ Question:
 {question}
 """
 
-            # Gemini response
+            # Generate Response
             response = llm.invoke(prompt)
 
-        st.subheader("📌 Answer")
+            answer = response.content
 
-        st.write(response.content)
+        # Store Assistant Message
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": answer
+            }
+        )
 
-        # Optional Debug Section
-        with st.expander("Retrieved Context"):
+        # Display Assistant Response
+        with st.chat_message("assistant"):
+
+            st.markdown(answer)
+
+        # Debug Context
+        with st.expander("🔍 Retrieved Context"):
+
             st.write(context)
