@@ -138,6 +138,8 @@ Question:
 
             answer = response.content
 
+            usage = response.usage_metadata
+
         # Store Assistant Message
         st.session_state.messages.append(
             {
@@ -150,7 +152,20 @@ Question:
         with st.chat_message("assistant"):
 
             st.markdown(answer)
+            
+        with st.expander("📊 Token Usage"):
 
+            st.write(
+                f"Input Tokens: {usage.get('input_tokens', 'N/A')}"
+            )
+
+            st.write(
+                f"Output Tokens: {usage.get('output_tokens', 'N/A')}"
+            )
+
+            st.write(
+                f"Total Tokens: {usage.get('total_tokens', 'N/A')}"
+            )        
         # Debug Context
         with st.expander("🔍 Retrieved Context"):
 
