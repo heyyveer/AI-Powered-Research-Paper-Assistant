@@ -1,5 +1,8 @@
+import streamlit as st
 from langchain_google_genai import ChatGoogleGenerativeAI
 
+
+@st.cache_resource
 def get_llm():
 
     llm = ChatGoogleGenerativeAI(

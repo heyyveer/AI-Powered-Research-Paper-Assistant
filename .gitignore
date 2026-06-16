@@ -1,5 +1,17 @@
-research/
+# Environment
 .env
+research/
+
+# Python
 __pycache__/
 *.pyc
-.ipynb_checkpoints/
+
+# FAISS Cache
+data/faiss_indexes/
+
+# Streamlit
+.streamlit/
+
+# OS Files
+.DS_Store
+Thumbs.db

@@ -7,6 +7,23 @@ from utils.embeddings import get_embeddings
 from utils.vector_store import create_vector_store
 from utils.rag_pipeline import get_llm
 
+from utils.reranker import (
+    get_reranker,
+    rerank_documents
+)
+
+from utils.cache_manager import (
+    generate_pdf_hash,
+    get_index_path,
+    index_exists
+)
+
+from utils.vector_store import (
+    create_vector_store,
+    save_vector_store,
+    load_vector_store
+)
+
 # Load environment variables
 load_dotenv()
 
@@ -34,23 +51,49 @@ if pdf:
 
     with st.spinner("Processing PDF..."):
 
-        # Extract text
-        text = extract_text_from_pdf(pdf)
-
-        # Create chunks
-        chunks = split_text(text)
-
-        # Create embeddings
         embeddings = get_embeddings()
 
-        # Create Vector Store
-        vector_db = create_vector_store(
-            chunks,
-            embeddings
-        )
+        pdf_hash = generate_pdf_hash(pdf)
 
-        # Load Gemini
+        index_path = get_index_path(pdf_hash)
+
+        text = extract_text_from_pdf(pdf)
+
+        if index_exists(pdf_hash):
+
+            st.success("⚡ Existing Index Found")
+
+            vector_db = load_vector_store(
+                embeddings,
+                index_path
+            )
+
+            chunks = None
+
+        else:
+
+            st.info("📄 Processing PDF...")
+
+            chunks = split_text(text)
+
+            vector_db = create_vector_store(
+                chunks,
+                embeddings
+            )
+
+            save_vector_store(
+                vector_db,
+                index_path
+            )
+
+            st.success("✅ Index Saved")
+
+            st.session_state.chunk_count = len(chunks)
+
+        st.session_state.char_count = len(text)
+
         llm = get_llm()
+        reranker = get_reranker()
 
     # Sidebar
     with st.sidebar:
@@ -59,12 +102,18 @@ if pdf:
 
         st.metric(
             "Chunks",
-            len(chunks)
+            st.session_state.get(
+                "chunk_count",
+                "Cached"
+            )
         )
 
         st.metric(
             "Characters",
-            len(text)
+            st.session_state.get(
+                "char_count",
+                "N/A"
+            )
         )
 
         st.success("Paper Loaded")
@@ -106,32 +155,82 @@ if pdf:
         with st.spinner("Generating Answer..."):
 
             # Retrieve Relevant Chunks
+
             docs = vector_db.similarity_search(
                 question,
-                k=4
+                k=20
+            )
+            ranked_docs = rerank_documents(
+                question,
+                docs,
+                reranker,
+                top_k=5
+            )
+
+            docs = [
+                doc
+                for doc, score in ranked_docs
+            ]
+            docs = rerank_documents(
+                question,
+                docs,
+                reranker,
+                top_k=5
             )
 
             # Build Context
             context = "\n\n".join(
-                [doc.page_content for doc in docs]
+                [doc.page_content for doc, score in ranked_docs]
             )
+
+            with st.expander("🔍 Retrieved Chunks"):
+
+                for i, (doc, score) in enumerate(
+                    ranked_docs,
+                    start=1
+                ):
+
+                    st.markdown(
+                        f"### Chunk {i} | Score: {score:.4f}"
+                    )
+
+                    st.write(
+                        doc.page_content[:700]
+                    )
+
+
+            with st.expander("📊 Reranking Scores"):
+
+                for i, (doc, score) in enumerate(
+                    ranked_docs,
+                    start=1
+                ):
+
+                    st.write(
+                        f"Chunk {i}: {score:.4f}"
+                    )
 
             # Prompt
             prompt = f"""
-You are an expert research paper assistant.
+            You are an expert research paper analyst.
 
-Answer ONLY using the provided context.
+            Use ONLY the provided context.
 
-If the answer is not present in the context, reply:
+            Rules:
+            1. Do not use outside knowledge.
+            2. If information is missing, explicitly say so.
+            3. Answer in a structured format.
+            4. Mention important findings and limitations when relevant.
+            5. Be concise but accurate.
 
-"I could not find this information in the uploaded paper."
+            Context:
+            {context}
 
-Context:
-{context}
+            Question:
+            {question}
 
-Question:
-{question}
-"""
+            Answer:
+            """
 
             # Generate Response
             response = llm.invoke(prompt)
