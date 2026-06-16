@@ -172,6 +172,22 @@ streamlit run app.py
 
 ---
 
+## Release History
+
+### v1.0 - Core RAG System
+
+- PDF Upload & Processing
+- Semantic Search with FAISS
+- BGE Embeddings
+- Gemini 2.5 Flash Integration
+- Persistent FAISS Caching
+- Hash-Based Document Lookup
+- Cross-Encoder Re-Ranking
+- Conversational Research Q&A
+- Token Usage Tracking
+ 
+---
+
 ## 🔮 Future Enhancements
 
 * Multiple PDF Upload Support
