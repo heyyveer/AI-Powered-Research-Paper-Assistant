@@ -204,6 +204,15 @@ streamlit run app.py
 
 ---
 
+<<<<<<< Updated upstream
+=======
+<!-- ## 📈 Resume Description -->
+
+<!-- Developed an AI-Powered Research Paper Assistant using Retrieval-Augmented Generation (RAG), FAISS, Sentence Transformers, LangChain, and Gemini API. Implemented semantic document retrieval, conversational question answering, vector search, and contextual response generation to improve research paper comprehension and information extraction. -->
+
+---
+
+>>>>>>> Stashed changes
 ## 👨‍💻 Author
 
 Veer Tiwari
