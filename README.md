@@ -2,7 +2,7 @@
 
 An intelligent Research Paper Assistant built using Retrieval-Augmented Generation (RAG), Large Language Models (LLMs), Vector Databases, and Natural Language Processing (NLP). The application allows users to upload research papers and interact with them through natural language queries, making academic research faster, easier, and more efficient.
 
---
+---
 
 ## 🚀 Features
 
