@@ -4,7 +4,7 @@ research/
 # Python
 __pycache__/
 *.pyc
-
+.env
 # FAISS Cache
 data/faiss_indexes/
 
