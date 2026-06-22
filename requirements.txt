@@ -11,6 +11,8 @@ sentence-transformers
 transformers
 torch
 
+torchvision
+
 faiss-cpu
 
 pypdf
