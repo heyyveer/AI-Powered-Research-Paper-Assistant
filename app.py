@@ -7,6 +7,10 @@ from utils.embeddings import get_embeddings
 from utils.vector_store import create_vector_store
 from utils.rag_pipeline import get_llm
 
+from utils.summarizer import (
+    generate_summary_prompt
+)
+
 from utils.reranker import (
     get_reranker,
     rerank_documents
@@ -56,8 +60,10 @@ if pdf:
         pdf_hash = generate_pdf_hash(pdf)
 
         index_path = get_index_path(pdf_hash)
-
+        
         text = extract_text_from_pdf(pdf)
+
+        st.session_state.paper_text = text
 
         if index_exists(pdf_hash):
 
@@ -126,6 +132,89 @@ if pdf:
 
     st.success("✅ PDF Processed Successfully")
 
+    st.subheader("📑 Research Paper Insights")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        executive_btn = st.button(
+            "📄 Executive Summary"
+        )
+
+    with col2:
+        methodology_btn = st.button(
+            "🔬 Methodology"
+        )
+
+    with col3:
+        results_btn = st.button(
+            "📊 Results"
+        )
+
+    col4, col5 = st.columns(2)
+
+    with col4:
+        limitations_btn = st.button(
+            "⚠️ Limitations"
+        )
+
+    with col5:
+        future_btn = st.button(
+            "🚀 Future Work"
+        )
+
+    summary_type = None
+
+    if executive_btn:
+        summary_type = "executive"
+
+    elif methodology_btn:
+        summary_type = "methodology"
+
+    elif results_btn:
+        summary_type = "results"
+
+    elif limitations_btn:
+        summary_type = "limitations"
+
+    elif future_btn:
+        summary_type = "future_work"
+
+
+    if summary_type:
+
+        with st.spinner(
+            "Generating Summary..."
+        ):
+
+            docs = vector_db.similarity_search(
+                "summarize the research paper",
+                k=20
+            )
+
+            context = "\n\n".join(
+                [
+                    doc.page_content
+                    for doc in docs
+                ]
+            )
+
+            prompt = generate_summary_prompt(
+                summary_type,
+                context
+            )
+
+            response = llm.invoke(
+                prompt
+            )
+
+            st.subheader(
+                "📋 Summary"
+            )
+
+            st.write(
+                response.content
+            )
     # Display Chat History
     for message in st.session_state.messages:
 
