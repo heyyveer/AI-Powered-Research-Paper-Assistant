@@ -9,8 +9,7 @@ __pycache__/
 # FAISS Cache
 data/faiss_indexes/
 
-# Streamlit
-.streamlit/
+
 
 # OS Files
 .DS_Store
