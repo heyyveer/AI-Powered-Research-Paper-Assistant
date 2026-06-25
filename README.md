@@ -56,7 +56,7 @@ Gemini LLM
 ↓
 Context-Aware Answer Generation
 
----
+--
 
 ## 🛠️ Tech Stack
 
